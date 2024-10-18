@@ -1,5 +1,6 @@
 from Crypto.Util.number import *
 import socket 
+import threading
 
 SERVER_HOST = "127.0.0.1"
 SERVER_PORT = 4576
@@ -45,23 +46,53 @@ server_public_key = recieve_public_key_param()
 send_public_key_param()
 
 counter = 1
-while True:
-    message = input("Enter the message (limit size = 1024): ")
 
-    encrypted_message = encrypt(message)
-    print(f"[*] Encrypted message {counter} sent: {encrypted_message}\n")
+def server_receive(server_socket):
+    global counter 
+    while True: 
+        try:
+            encrypted_message = server_socket.recv(1024).decode()
+            print(f"[*] Message {counter} received: {encrypted_message}")
 
-    client.send(encrypted_message.encode())
-    counter += 1
+            decrypted_message = long_to_bytes(pow(int(encrypted_message, 16), client_d, client_n)).decode()
+            print(f"[*] Decrypted message {counter}: {decrypted_message}\n")
+            
+            counter += 1
+        except (ConnectionResetError, ValueError):
+            print(f"[-] Connection with server at {SERVER_HOST}:{SERVER_PORT} disconnected.")
+            server_socket.close()
+            exit(0)
+            break
+    return
 
-    try:
-        request = client.recv(1024).decode()
-        print(f"[*] Message {counter} Received: {request}")
+def client_send(server_socket):
+    global counter
+    while True:
+        try:
+            message = input("")
 
-        decrypted_message = long_to_bytes(pow(int(request, 16), client_d, client_n)).decode()
-        print(f"[*] Decrypted Message {counter}: {decrypted_message}\n")
-        counter += 1
-    except (ConnectionResetError, ValueError):
-        print(f"[-] Connection with client at {SERVER_HOST}:{SERVER_PORT} disconnected.")
-        client.close()
-        break
+            encrypted_message = encrypt(message)
+            print(f"[*] Encrypted message {counter} sent: {encrypted_message}\n")
+            client.send(encrypted_message.encode())
+            
+            counter += 1
+        except (ConnectionResetError, ValueError):
+            print(f"[-] Connection with server at {SERVER_HOST}:{SERVER_PORT} disconnected.")
+            client.close()
+            exit(0)
+            break
+    return
+
+try:
+    recv_thread = threading.Thread(target=server_receive, args=(client,))
+    send_thread = threading.Thread(target=client_send, args=(client,))
+
+    recv_thread.start()
+    send_thread.start()
+
+    recv_thread.join()
+    send_thread.join()
+except: 
+    print(f"[-] Connection with server at {SERVER_HOST}:{SERVER_PORT} disconnected.")
+    client.close()
+    exit(0)

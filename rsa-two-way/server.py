@@ -1,6 +1,6 @@
 import socket 
 from Crypto.Util.number import *
-
+import threading
 SERVER_HOST = "127.0.0.1"
 SERVER_PORT = 4576
 
@@ -59,22 +59,52 @@ client_public_key = recieve_public_key_param()
 
 counter = 1
 
-while True:
-    try:
-        request = client_socket.recv(1024).decode()
-        print(f"[*] Message {counter} Received: {request}")
+def client_receive(client_socket, client_address):
+    global counter
+    while True:
+        try:
+            encrypted_message = client_socket.recv(1024).decode()
+            print(f"[*] Message {counter} received: {encrypted_message}")
 
-        decrypted_message = long_to_bytes(pow(int(request, 16), server_d, server_n)).decode()
-        print(f"[*] Decrypted Message {counter}: {decrypted_message}\n")
-        counter += 1
-    except (ConnectionResetError, ValueError):
-        print(f"[-] Connection with client at {client_address[0]}:{client_address[1]} disconnected.")
-        client_socket.close()
-        break
+            decrypted_message = long_to_bytes(pow(int(encrypted_message, 16), server_d, server_n)).decode()
+            print(f"[*] Decrypted message {counter}: {decrypted_message}\n")
+            
+            counter += 1
+        except (ConnectionResetError, ValueError):
+            print(f"[-] Connection with client at {client_address[0]}:{client_address[1]} disconnected.")
+            client_socket.close()
+            exit(0)
+            break
+    return
 
-    message = input("Enter the message to send to client (limit = 1024): ")
-    encrypted_message = encrypt(message)
-    print(f"[*] Encrypted message {counter} sent : {encrypted_message}\n")
+def server_send(client_socket, client_address):
+    global counter
+    while True:
+        try:
+            message = input()
 
-    client_socket.send(encrypted_message.encode())
-    counter += 1
+            encrypted_message = encrypt(message)
+            print(f"[*] Encrypted message {counter} sent: {encrypted_message}\n")
+            client_socket.send(encrypted_message.encode())
+            
+            counter += 1
+        except (ConnectionResetError, ValueError):
+            print(f"[-] Connection with client at {client_address[0]}:{client_address[1]} disconnected.")
+            client_socket.close()
+            exit(0)
+            break
+    return
+
+try:
+    recv_thread = threading.Thread(target=client_receive, args=(client_socket, client_address,))
+    send_thread = threading.Thread(target=server_send, args=(client_socket, client_address,))
+
+    recv_thread.start()
+    send_thread.start()
+
+    recv_thread.join()
+    send_thread.join()
+except (ConnectionResetError, ValueError):
+    print(f"[-] Connection with client at {client_address[0]}:{client_address[1]} disconnected.")
+    client_socket.close()
+    exit(0)
