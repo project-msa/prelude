@@ -11,7 +11,6 @@ def generate_n(prime_size):
     n = p * q  
     return n, p, q
 
-
 def factorize_rsa_modulus(n):
     start_time = time.time()  
     factors = factor(n) #replace factor with factorint if not using sage
