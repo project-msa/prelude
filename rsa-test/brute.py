@@ -14,7 +14,7 @@ def generate_n(prime_size):
 
 def factorize_rsa_modulus(n):
     start_time = time.time()  
-    factors = factor(n) #replace factor with factorint if not using sage
+    factors = factorint(n) #replace factor with factorint if not using sage
     end_time = time.time()  
     factorization_time = end_time - start_time  
     return factors, factorization_time
@@ -22,16 +22,19 @@ def factorize_rsa_modulus(n):
 prime_sizes = []
 factorization_times = []
 
-for prime_size in range(10, 100, 10): 
+for prime_size in range(10, 80, 10): 
     print(f"Testing prime size: {prime_size}-bit")
+    t = []
+    for i in range(10):
+        n, p, q = generate_n(prime_size)
+        print(f"Generated RSA modulus n = p * q (p={p}, q={q}, n={n})")
+
+        factors, time_taken = factorize_rsa_modulus(n)
+        t.append(time_taken)
     
-    n, p, q = generate_n(prime_size)
-    print(f"Generated RSA modulus n = p * q (p={p}, q={q}, n={n})")
-    
-    factors, time_taken = factorize_rsa_modulus(n)
-    
+    avg_time = sum(t[0:9])/len(t[0:9])
     prime_sizes.append(prime_size)
-    factorization_times.append(time_taken)
+    factorization_times.append(avg_time)
     print(f"Factorized n: {factors}")
     print(f"Time taken to factorize: {time_taken:.6f} seconds\n")
 
