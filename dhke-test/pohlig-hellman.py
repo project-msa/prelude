@@ -16,8 +16,8 @@ def factorise(n):
 
 def pohlig_hellman(p, g, b):
     group_order = p - 1
-    primes = factorise(p - 1)
-    dlp = [0] * (len(primes))
+    primes = factorise(group_order)
+    dlp = [0] * len(primes)
 
     decomposition = []
     for i, (p_i, e_i) in enumerate(primes):
