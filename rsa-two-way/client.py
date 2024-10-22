@@ -42,6 +42,9 @@ def encrypt(msg):
     msg = pow(msg, server_public_key[1], server_public_key[0])
     return hex(msg)[2:]
 
+def decrypt(msg):
+    decrypted_message = long_to_bytes(pow(int(msg, 16), client_d, client_n)).decode()
+    return decrypted_message
 server_public_key = recieve_public_key_param()
 send_public_key_param()
 
@@ -54,7 +57,7 @@ def server_receive(server_socket):
             encrypted_message = server_socket.recv(1024).decode()
             print(f"[*] Message {counter} received: {encrypted_message}")
 
-            decrypted_message = long_to_bytes(pow(int(encrypted_message, 16), client_d, client_n)).decode()
+            decrypted_message = decrypt(encrypted_message)
             print(f"[*] Decrypted message {counter}: {decrypted_message}\n")
             
             counter += 1

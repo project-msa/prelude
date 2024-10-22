@@ -1,6 +1,7 @@
 import socket 
 from Crypto.Util.number import *
 import threading
+
 SERVER_HOST = "127.0.0.1"
 SERVER_PORT = 4576
 
@@ -10,7 +11,6 @@ server.bind((SERVER_HOST, SERVER_PORT))
 server.listen()
 
 print(f"[+] Listening on {SERVER_HOST}:{SERVER_PORT}")
-
 
 ## generate key
 p = getPrime(512)
@@ -30,13 +30,11 @@ server_private_key = (server_n, server_e, server_d)
 def init(client_address):
     connection_message = f"[+] Established connection with client at {client_address}"
     print(connection_message)
-
     return
 
 def send_public_key_param(client_socket):
     param_message = f"[+] public key params (n, e) = ({server_n}, {server_e})\n"
     client_socket.send(param_message.encode())
-
     return
 
 def recieve_public_key_param():
